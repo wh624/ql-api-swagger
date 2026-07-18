@@ -1,0 +1,1367 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "青龙面板 Open API",
+    "description": "青龙面板 (Qinglong Panel) 开放接口文档\n\n## 认证流程\n\n1. **创建应用**: 系统设置 → 应用设置 → 添加应用，获取 `client_id` 和 `client_secret`\n2. **获取 Token**: `GET /open/auth/token?client_id=xxx&client_secret=xxx`\n3. **使用 Token**: 在请求头中添加 `Authorization: Bearer {token}`\n\n## 基础路径\n\n所有接口的基础路径为 `/open`。\n\n## 错误处理\n\n- 成功响应格式: `{ \"code\": 200, \"data\": ... }`\n- 错误由 Winston logger 统一处理",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Qinglong",
+      "url": "https://github.com/whyour/qinglong"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://{host}:{port}/open",
+      "description": "青龙面板服务器",
+      "variables": {
+        "host": {
+          "default": "localhost",
+          "description": "青龙面板服务器地址"
+        },
+        "port": {
+          "default": "5700",
+          "description": "青龙面板服务端口"
+        }
+      }
+    }
+  ],
+  "tags": [
+    { "name": "认证", "description": "Token 认证相关接口" },
+    { "name": "定时任务", "description": "定时任务的增删改查、运行控制、视图管理等" },
+    { "name": "订阅管理", "description": "订阅的创建、运行、启停等操作" },
+    { "name": "环境变量", "description": "环境变量的增删改查、批量操作等" },
+    { "name": "配置文件", "description": "配置文件的查看与编辑" },
+    { "name": "脚本管理", "description": "脚本的上传、编辑、删除、运行等操作" },
+    { "name": "依赖管理", "description": "依赖包的安装、卸载、重装等操作" },
+    { "name": "日志管理", "description": "日志文件的查看与管理" },
+    { "name": "系统设置", "description": "系统信息、配置、更新、通知等操作" }
+  ],
+  "paths": {
+    "/auth/token": {
+      "get": {
+        "tags": ["认证"],
+        "summary": "获取 Token",
+        "description": "使用 client_id 和 client_secret 获取访问令牌",
+        "parameters": [
+          { "name": "client_id", "in": "query", "required": true, "schema": { "type": "string" }, "description": "创建应用时生成的 Client ID" },
+          { "name": "client_secret", "in": "query", "required": true, "schema": { "type": "string" }, "description": "创建应用时生成的 Client Secret" }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer", "example": 200 },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": { "type": "string", "example": "xxxxxx" },
+                        "token_type": { "type": "string", "example": "Bearer" },
+                        "expiration": { "type": "integer", "example": 1237889999 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/crons/views": {
+      "get": {
+        "tags": ["定时任务"],
+        "summary": "获取视图列表",
+        "responses": { "200": { "description": "成功" } }
+      },
+      "post": {
+        "tags": ["定时任务"],
+        "summary": "创建视图",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "sorts": { "type": "array", "items": {} },
+                  "filters": { "type": "array", "items": {} },
+                  "filterRelation": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "更新视图",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id", "name"],
+                "properties": {
+                  "id": { "type": "integer" },
+                  "name": { "type": "string" },
+                  "sorts": { "type": "array", "items": {} },
+                  "filters": { "type": "array", "items": {} },
+                  "filterRelation": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "delete": {
+        "tags": ["定时任务"],
+        "summary": "删除视图",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/views/move": {
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "移动视图位置",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["fromIndex", "toIndex", "id"],
+                "properties": {
+                  "fromIndex": { "type": "integer" },
+                  "toIndex": { "type": "integer" },
+                  "id": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/views/disable": {
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "禁用视图",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/views/enable": {
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "启用视图",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/": {
+      "get": {
+        "tags": ["定时任务"],
+        "summary": "获取任务列表",
+        "responses": { "200": { "description": "成功" } }
+      },
+      "post": {
+        "tags": ["定时任务"],
+        "summary": "创建任务",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["command", "schedule"],
+                "properties": {
+                  "command": { "type": "string" },
+                  "schedule": { "type": "string" },
+                  "name": { "type": "string" },
+                  "labels": { "type": "array", "items": { "type": "string" } },
+                  "sub_id": { "type": "integer" },
+                  "extra_schedules": { "type": "array", "items": {} },
+                  "task_before": { "type": "string" },
+                  "task_after": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "更新任务",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id", "command", "schedule"],
+                "properties": {
+                  "id": { "type": "integer" },
+                  "command": { "type": "string" },
+                  "schedule": { "type": "string" },
+                  "name": { "type": "string" },
+                  "labels": { "type": "array", "items": { "type": "string" } },
+                  "sub_id": { "type": "integer" },
+                  "extra_schedules": { "type": "array", "items": {} },
+                  "task_before": { "type": "string" },
+                  "task_after": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "delete": {
+        "tags": ["定时任务"],
+        "summary": "删除任务",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/run": {
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "运行任务",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/stop": {
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "停止任务",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/disable": {
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "禁用任务",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/enable": {
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "启用任务",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/pin": {
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "置顶任务",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/unpin": {
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "取消置顶",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/labels": {
+      "post": {
+        "tags": ["定时任务"],
+        "summary": "添加标签",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["ids", "labels"],
+                "properties": {
+                  "ids": { "type": "array", "items": { "type": "integer" } },
+                  "labels": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "delete": {
+        "tags": ["定时任务"],
+        "summary": "删除标签",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["ids", "labels"],
+                "properties": {
+                  "ids": { "type": "array", "items": { "type": "integer" } },
+                  "labels": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/status": {
+      "put": {
+        "tags": ["定时任务"],
+        "summary": "更新任务状态",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["ids", "status"],
+                "properties": {
+                  "ids": { "type": "array", "items": { "type": "integer" } },
+                  "status": { "type": "string" },
+                  "pid": { "type": "string" },
+                  "log_path": { "type": "string" },
+                  "last_running_time": { "type": "integer" },
+                  "last_execution_time": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/detail": {
+      "get": {
+        "tags": ["定时任务"],
+        "summary": "获取任务详情",
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/import": {
+      "get": {
+        "tags": ["定时任务"],
+        "summary": "导入定时任务",
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/{id}": {
+      "get": {
+        "tags": ["定时任务"],
+        "summary": "获取单个任务",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "任务ID" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/{id}/log": {
+      "get": {
+        "tags": ["定时任务"],
+        "summary": "获取任务日志",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "任务ID" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/crons/{id}/logs": {
+      "get": {
+        "tags": ["定时任务"],
+        "summary": "获取任务日志列表",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "任务ID" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/subscriptions/": {
+      "get": {
+        "tags": ["订阅管理"],
+        "summary": "获取订阅列表",
+        "parameters": [
+          { "name": "searchValue", "in": "query", "schema": { "type": "string" }, "description": "搜索关键词" },
+          { "name": "ids", "in": "query", "schema": { "type": "string" }, "description": "订阅ID列表" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      },
+      "post": {
+        "tags": ["订阅管理"],
+        "summary": "创建订阅",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type", "url", "schedule_type", "alias"],
+                "properties": {
+                  "type": { "type": "string" },
+                  "schedule": { "type": "string" },
+                  "interval_schedule": {
+                    "type": "object",
+                    "properties": {
+                      "type": { "type": "string" },
+                      "value": { "type": "integer" }
+                    }
+                  },
+                  "name": { "type": "string" },
+                  "url": { "type": "string" },
+                  "whitelist": { "type": "string" },
+                  "blacklist": { "type": "string" },
+                  "branch": { "type": "string" },
+                  "dependences": { "type": "string" },
+                  "pull_type": { "type": "string" },
+                  "pull_option": { "type": "object" },
+                  "extensions": { "type": "string" },
+                  "sub_before": { "type": "string" },
+                  "sub_after": { "type": "string" },
+                  "schedule_type": { "type": "string" },
+                  "alias": { "type": "string" },
+                  "proxy": { "type": "string" },
+                  "autoAddCron": { "type": "boolean" },
+                  "autoDelCron": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/subscriptions/run": {
+      "put": {
+        "tags": ["订阅管理"],
+        "summary": "运行订阅",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/subscriptions/stop": {
+      "put": {
+        "tags": ["订阅管理"],
+        "summary": "停止订阅",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/subscriptions/disable": {
+      "put": {
+        "tags": ["订阅管理"],
+        "summary": "禁用订阅",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/subscriptions/enable": {
+      "put": {
+        "tags": ["订阅管理"],
+        "summary": "启用订阅",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/subscriptions/status": {
+      "put": {
+        "tags": ["订阅管理"],
+        "summary": "更新订阅状态",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["ids", "status"],
+                "properties": {
+                  "ids": { "type": "array", "items": { "type": "integer" } },
+                  "status": { "type": "string" },
+                  "pid": { "type": "string" },
+                  "log_path": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/subscriptions/{id}/log": {
+      "get": {
+        "tags": ["订阅管理"],
+        "summary": "获取订阅日志",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "订阅ID" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/subscriptions/{id}/logs": {
+      "get": {
+        "tags": ["订阅管理"],
+        "summary": "获取订阅日志列表",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "订阅ID" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/envs/": {
+      "get": {
+        "tags": ["环境变量"],
+        "summary": "获取环境变量列表",
+        "parameters": [
+          { "name": "searchValue", "in": "query", "schema": { "type": "string" }, "description": "搜索关键词" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      },
+      "post": {
+        "tags": ["环境变量"],
+        "summary": "创建环境变量",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "value"],
+                  "properties": {
+                    "name": { "type": "string", "description": "变量名（以字母或下划线开头）" },
+                    "value": { "type": "string" },
+                    "remarks": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "put": {
+        "tags": ["环境变量"],
+        "summary": "更新环境变量",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id", "name", "value"],
+                "properties": {
+                  "id": { "type": "integer" },
+                  "name": { "type": "string" },
+                  "value": { "type": "string" },
+                  "remarks": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "delete": {
+        "tags": ["环境变量"],
+        "summary": "删除环境变量",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/envs/{id}": {
+      "get": {
+        "tags": ["环境变量"],
+        "summary": "获取单个环境变量",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "环境变量ID" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/envs/{id}/move": {
+      "put": {
+        "tags": ["环境变量"],
+        "summary": "移动环境变量位置",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "环境变量ID" }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["fromIndex", "toIndex"],
+                "properties": {
+                  "fromIndex": { "type": "integer" },
+                  "toIndex": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/envs/disable": {
+      "put": {
+        "tags": ["环境变量"],
+        "summary": "禁用环境变量",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/envs/enable": {
+      "put": {
+        "tags": ["环境变量"],
+        "summary": "启用环境变量",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/envs/name": {
+      "put": {
+        "tags": ["环境变量"],
+        "summary": "批量更新变量名",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["ids", "name"],
+                "properties": {
+                  "ids": { "type": "array", "items": { "type": "integer" } },
+                  "name": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/envs/upload": {
+      "post": {
+        "tags": ["环境变量"],
+        "summary": "上传环境变量文件",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "env": { "type": "string", "format": "binary", "description": "JSON文件（每条数据包含name和value）" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/configs/sample": {
+      "get": {
+        "tags": ["配置文件"],
+        "summary": "获取示例文件列表",
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/configs/files": {
+      "get": {
+        "tags": ["配置文件"],
+        "summary": "获取配置文件列表",
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/configs/detail": {
+      "get": {
+        "tags": ["配置文件"],
+        "summary": "获取文件详情",
+        "parameters": [
+          { "name": "path", "in": "query", "required": true, "schema": { "type": "string" }, "description": "文件路径" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/configs/save": {
+      "post": {
+        "tags": ["配置文件"],
+        "summary": "保存配置文件",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "content"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "content": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/configs/{file}": {
+      "get": {
+        "tags": ["配置文件"],
+        "summary": "获取指定文件",
+        "parameters": [
+          { "name": "file", "in": "path", "required": true, "schema": { "type": "string" }, "description": "配置文件名称" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/scripts/": {
+      "get": {
+        "tags": ["脚本管理"],
+        "summary": "获取脚本列表",
+        "parameters": [
+          { "name": "path", "in": "query", "schema": { "type": "string" }, "description": "脚本路径" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      },
+      "post": {
+        "tags": ["脚本管理"],
+        "summary": "上传/创建脚本",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["filename"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" },
+                  "filename": { "type": "string" },
+                  "path": { "type": "string" },
+                  "content": { "type": "string" },
+                  "originFilename": { "type": "string" },
+                  "directory": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "put": {
+        "tags": ["脚本管理"],
+        "summary": "更新脚本内容",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filename", "content"],
+                "properties": {
+                  "filename": { "type": "string" },
+                  "path": { "type": "string" },
+                  "content": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "delete": {
+        "tags": ["脚本管理"],
+        "summary": "删除脚本",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filename"],
+                "properties": {
+                  "filename": { "type": "string" },
+                  "path": { "type": "string" },
+                  "type": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/scripts/detail": {
+      "get": {
+        "tags": ["脚本管理"],
+        "summary": "获取脚本详情",
+        "parameters": [
+          { "name": "file", "in": "query", "required": true, "schema": { "type": "string" }, "description": "文件名" },
+          { "name": "path", "in": "query", "schema": { "type": "string" }, "description": "脚本路径" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/scripts/download": {
+      "post": {
+        "tags": ["脚本管理"],
+        "summary": "下载脚本",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filename"],
+                "properties": {
+                  "filename": { "type": "string" },
+                  "path": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/scripts/run": {
+      "put": {
+        "tags": ["脚本管理"],
+        "summary": "运行脚本",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filename"],
+                "properties": {
+                  "filename": { "type": "string" },
+                  "content": { "type": "string" },
+                  "path": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/scripts/stop": {
+      "put": {
+        "tags": ["脚本管理"],
+        "summary": "停止脚本",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filename"],
+                "properties": {
+                  "filename": { "type": "string" },
+                  "path": { "type": "string" },
+                  "pid": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/scripts/rename": {
+      "put": {
+        "tags": ["脚本管理"],
+        "summary": "重命名脚本",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filename", "newFilename"],
+                "properties": {
+                  "filename": { "type": "string" },
+                  "path": { "type": "string" },
+                  "newFilename": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/dependencies/": {
+      "get": {
+        "tags": ["依赖管理"],
+        "summary": "获取依赖列表",
+        "responses": { "200": { "description": "成功" } }
+      },
+      "post": {
+        "tags": ["依赖管理"],
+        "summary": "创建依赖",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "type"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "type": { "type": "integer" },
+                    "remark": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "put": {
+        "tags": ["依赖管理"],
+        "summary": "更新依赖",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "integer" },
+                  "name": { "type": "string" },
+                  "type": { "type": "integer" },
+                  "remark": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      },
+      "delete": {
+        "tags": ["依赖管理"],
+        "summary": "删除依赖",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/dependencies/{id}": {
+      "get": {
+        "tags": ["依赖管理"],
+        "summary": "获取单个依赖",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "依赖ID" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/dependencies/force": {
+      "delete": {
+        "tags": ["依赖管理"],
+        "summary": "强制删除依赖",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/dependencies/reinstall": {
+      "put": {
+        "tags": ["依赖管理"],
+        "summary": "重新安装依赖",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/dependencies/cancel": {
+      "put": {
+        "tags": ["依赖管理"],
+        "summary": "取消安装",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "array", "items": { "type": "integer" } } } }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/logs/": {
+      "get": {
+        "tags": ["日志管理"],
+        "summary": "获取日志列表",
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/logs/detail": {
+      "get": {
+        "tags": ["日志管理"],
+        "summary": "获取日志详情",
+        "parameters": [
+          { "name": "path", "in": "query", "schema": { "type": "string" }, "description": "日志路径" },
+          { "name": "file", "in": "query", "schema": { "type": "string" }, "description": "文件名" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/logs/{file}": {
+      "get": {
+        "tags": ["日志管理"],
+        "summary": "获取指定日志文件",
+        "parameters": [
+          { "name": "file", "in": "path", "required": true, "schema": { "type": "string" }, "description": "日志文件名" },
+          { "name": "path", "in": "query", "schema": { "type": "string" }, "description": "日志路径" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/": {
+      "get": {
+        "tags": ["系统设置"],
+        "summary": "获取系统信息",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "isInitialized": { "type": "boolean" },
+                        "version": { "type": "string" },
+                        "publishTime": { "type": "integer" },
+                        "branch": { "type": "string" },
+                        "changeLog": { "type": "string" },
+                        "changeLogLink": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/config": {
+      "get": {
+        "tags": ["系统设置"],
+        "summary": "获取系统配置",
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/config/log-remove-frequency": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "更新日志清理频率",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "logRemoveFrequency": { "type": ["integer", "null"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/config/cron-concurrency": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "更新定时任务并发数",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cronConcurrency": { "type": ["integer", "null"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/config/dependence-proxy": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "更新依赖代理",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dependenceProxy": { "type": ["string", "null"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/config/node-mirror": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "更新 Node 镜像",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nodeMirror": { "type": ["string", "null"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/config/python-mirror": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "更新 Python 镜像",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pythonMirror": { "type": ["string", "null"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/config/linux-mirror": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "更新 Linux 镜像",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "linuxMirror": { "type": ["string", "null"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/update-check": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "检查系统更新",
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/update": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "执行系统更新",
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/reload": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "重载系统",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": ["string", "null"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/notify": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "发送通知",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "content"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "content": { "type": "string" },
+                  "notificationInfo": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["gotify", "goCqHttpBot", "serverChan", "pushDeer", "bark", "chat", "telegramBot", "dingtalkBot", "weWorkBot", "weWorkApp", "aibotk", "iGot", "pushPlus", "wePlusBot", "email", "pushMe", "feishu", "webhook", "Chronocat", "ntfy", "wxPusherBot"]
+                      }
+                    },
+                    "description": "通知配置，各类型有各自特定参数"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/command-run": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "运行命令",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["command"],
+                "properties": {
+                  "command": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/command-stop": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "停止命令",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "command": { "type": "string" },
+                  "pid": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/data/export": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "导出系统数据",
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/data/import": {
+      "put": {
+        "tags": ["系统设置"],
+        "summary": "导入系统数据",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": { "type": "string", "format": "binary", "description": "导出的数据文件" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "成功" } }
+      }
+    },
+    "/system/log": {
+      "get": {
+        "tags": ["系统设置"],
+        "summary": "获取系统日志",
+        "parameters": [
+          { "name": "startTime", "in": "query", "schema": { "type": "string" }, "description": "开始时间" },
+          { "name": "endTime", "in": "query", "schema": { "type": "string" }, "description": "结束时间" },
+          { "name": "t", "in": "query", "schema": { "type": "string" }, "description": "日志类型" }
+        ],
+        "responses": { "200": { "description": "成功" } }
+      },
+      "delete": {
+        "tags": ["系统设置"],
+        "summary": "删除系统日志",
+        "responses": { "200": { "description": "成功" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "通过 GET /open/auth/token 获取 Bearer Token"
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }]
+}
