@@ -11,7 +11,7 @@ const totalApis = computed(() =>
   apiModules.reduce((sum, mod) => sum + mod.apis.length, 0)
 )
 
-const openApiUrl = window.location.origin + window.location.pathname.replace(/\/$/, '') + '/test1111/openapi.json'
+const openApiUrl = window.location.origin + window.location.pathname.replace(/\/$/, '') + '/ql-api-swagger/openapi.json'
 
 const filteredModules = ref(apiModules)
 
@@ -37,7 +37,7 @@ function goToModule(moduleId) {
 
 function downloadOpenApi() {
   const link = document.createElement('a')
-  link.href = '/test1111/openapi.json'
+  link.href = '/ql-api-swagger/openapi.json'
   link.download = 'qinglong-openapi.json'
   link.click()
 }
@@ -56,7 +56,7 @@ function copyOpenApiUrl() {
       <h1>🐉 青龙面板 API 文档</h1>
       <p class="subtitle">Qinglong Panel API Documentation</p>
       <p class="desc">完整的青龙面板 Open API 接口文档，与 <a href="https://qinglong.online/api/index" target="_blank">官方文档</a> 完全同步，涵盖 9 个模块、{{ totalApis }} 个接口的全部 API。</p>
-      
+
       <!-- API 统计 -->
       <div class="stats-bar">
         <div class="stat-item">
@@ -132,7 +132,7 @@ function copyOpenApiUrl() {
           <h2>🦊 导入到 Apifox</h2>
           <button class="modal-close" @click="showApifoxModal = false">×</button>
         </div>
-        
+
         <div class="modal-body">
           <p class="modal-desc">
             青龙面板全部 {{ totalApis }} 个 API 接口已生成 OpenAPI 3.0 规范文件，可通过以下任一方式导入到 Apifox：
@@ -370,7 +370,7 @@ function copyOpenApiUrl() {
   .hero h1 {
     font-size: 1.8rem;
   }
-  
+
   .modules-grid {
     grid-template-columns: 1fr;
   }
@@ -634,11 +634,11 @@ function copyOpenApiUrl() {
     gap: 1.5rem;
     padding: 1rem;
   }
-  
+
   .stat-num {
     font-size: 1.5rem;
   }
-  
+
   .modal-content {
     max-height: 90vh;
   }
