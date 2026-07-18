@@ -5,7 +5,7 @@ export const apiModules = [
     id: 'preparation',
     name: '准备工作',
     icon: '🚀',
-    description: '创建应用、获取 Token、请求接口的完整流程',
+    description: '创建应用、获取 Token、请求接口的完整流程。除 /open/auth/token 接口外，其他所有接口均需在请求头中携带 Authorization: Bearer <token>',
     baseUrl: '/open',
     apis: [
       {
@@ -36,7 +36,7 @@ export const apiModules = [
     "expiration": 1237889999
   }
 }`,
-        note: 'token: 访问令牌；token_type: 固定为 Bearer；expiration: 令牌过期时间戳'
+        note: '**此接口无需鉴权**\n\n- token: 访问令牌\n- token_type: 固定为 Bearer\n- expiration: 令牌过期时间戳'
       },
       {
         title: '请求接口',
